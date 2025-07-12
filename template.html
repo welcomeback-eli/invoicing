@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tax Invoice</title>
+    <!-- jsPDF CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- html2canvas CDN for better HTML to PDF conversion -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 40px; 
+            background-color: #f5f5f5;
+        }
+        
+        .invoice-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 { 
+            text-align: center; 
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .section { 
+            margin-bottom: 20px; 
+        }
+        
+        .column { 
+            display: inline-block; 
+            vertical-align: top; 
+            width: 48%; 
+        }
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-bottom: 20px;
+        }
+        
+        th, td { 
+            border: 1px solid #ccc; 
+            padding: 8px; 
+            text-align: left; 
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        
+        tfoot td { 
+            font-weight: bold; 
+            background-color: #f8f9fa;
+        }
+        
+        .controls {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+        }
+        
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+        }
+        
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        
+        @media print {
+            body {
+                background-color: white;
+                margin: 0;
+            }
+            
+            .controls {
+                display: none;
+            }
+            
+            .invoice-container {
+                box-shadow: none;
+                border-radius: 0;
+                padding: 20px;
+            }
+        }
+        
+        /* Styles for PDF generation */
+        .pdf-content {
+            background-color: white;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Control Panel -->
+    <div class="controls">
+        <button class="btn" onclick="generatePDF()">📄 Generate PDF</button>
+        <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Invoice</button>
+        <button class="btn btn-secondary" onclick="clearInvoice()">🗑️ Clear All</button>
+    </div>
+
+    <div class="invoice-container" id="invoice-content">
+        <h1>Tax Invoice</h1>
+
+        <!-- Seller & Buyer Details -->
+        <div class="section">
+            <div class="column">
+                <p><strong>Seller:</strong> <span contenteditable="true">ELIJAH XYLON JUDAH UDO IBELL</span></p>
+                <p><strong>ABN:</strong> <span contenteditable="true">50 744 683 162</span></p>
+                <p><strong>Invoice #:</strong> <span contenteditable="true">[0001]</span></p>
+                <p><strong>Date:</strong> <span contenteditable="true">11/07/2025</span></p>
+            </div>
+            <div class="column">
+                <p><strong>Bill To:</strong></p>
+                <p><span contenteditable="true">[Customer Name]</span><br>
+                <span contenteditable="true">[Customer Address]</span></p>
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Description of Goods / Services</th>
+                    <th>Qty</th>
+                    <th>Unit Price (inc GST)</th>
+                    <th>GST</th>
+                    <th>Line Total</th>
+                </tr>
+            </thead>
+            <tbody contenteditable="true">
+                <!-- Example row -->
+                <tr>
+                    <td>Example Item</td>
+                    <td>1</td>
+                    <td>$100.00</td>
+                    <td>$9.09</td>
+                    <td>$100.00</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="4" style="text-align:right;">Subtotal</td>
+                    <td contenteditable="true">$100.00</td>
+                </tr>
+                <tr>
+                    <td colspan="4" style="text-align:right;">GST (10%)</td>
+                    <td contenteditable="true">$9.09</td>
+                </tr>
+                <tr>
+                    <td colspan="4" style="text-align:right;">Total Due</td>
+                    <td contenteditable="true">$100.00</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- Taxability Statement -->
+        <div class="section">
+            <p><strong>Tax Status:</strong> <span contenteditable="true">All items on this invoice are fully taxable.</span></p>
+        </div>
+
+        <p>Payment is due within <span contenteditable="true">14</span> days.</p>
+    </div>
+
+    <script>
+        // Generate PDF function using html2canvas and jsPDF
+        async function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            
+            // Get the invoice content
+            const element = document.getElementById('invoice-content');
+            
+            try {
+                // Show loading message
+                const originalContent = element.innerHTML;
+                
+                // Use html2canvas to capture the invoice content
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff'
+                });
+                
+                // Create PDF
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgData = canvas.toDataURL('image/png');
+                
+                // Calculate dimensions
+                const imgWidth = 210; // A4 width in mm
+                const pageHeight = 295; // A4 height in mm
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                
+                let position = 0;
+                
+                // Add image to PDF
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+                
+                // Add new pages if content is longer than one page
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                
+                // Get invoice number for filename
+                const invoiceNumber = document.querySelector('[contenteditable="true"]').textContent.replace(/[^\w\s]/gi, '').replace(/\s+/g, '_') || 'invoice';
+                
+                // Save the PDF
+                pdf.save(`Tax_Invoice_${invoiceNumber}.pdf`);
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Error generating PDF. Please try again.');
+            }
+        }
+        
+        // Clear all editable content
+        function clearInvoice() {
+            if (confirm('Are you sure you want to clear all invoice data?')) {
+                const editableElements = document.querySelectorAll('[contenteditable="true"]');
+                editableElements.forEach(element => {
+                    if (element.tagName === 'TBODY') {
+                        element.innerHTML = `
+                            <tr>
+                                <td>Example Item</td>
+                                <td>1</td>
+                                <td>$100.00</td>
+                                <td>$9.09</td>
+                                <td>$100.00</td>
+                            </tr>
+                        `;
+                    } else {
+                        element.textContent = element.textContent.replace(/[^[\]]/g, '');
+                    }
+                });
+            }
+        }
+        
+        // Auto-calculate GST and totals
+        function calculateTotals() {
+            const rows = document.querySelectorAll('tbody tr');
+            let subtotal = 0;
+            let totalGST = 0;
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 5) {
+                    const qty = parseFloat(cells[1].textContent) || 0;
+                    const unitPrice = parseFloat(cells[2].textContent.replace(/[$,]/g, '')) || 0;
+                    const lineTotal = qty * unitPrice;
+                    const gst = lineTotal * 0.10;
+                    
+                    cells[3].textContent = `$${gst.toFixed(2)}`;
+                    cells[4].textContent = `$${lineTotal.toFixed(2)}`;
+                    
+                    subtotal += lineTotal;
+                    totalGST += gst;
+                }
+            });
+            
+            // Update footer totals
+            const footerCells = document.querySelectorAll('tfoot td[contenteditable="true"]');
+            if (footerCells.length >= 3) {
+                footerCells[0].textContent = `$${subtotal.toFixed(2)}`;
+                footerCells[1].textContent = `$${totalGST.toFixed(2)}`;
+                footerCells[2].textContent = `$${subtotal.toFixed(2)}`;
+            }
+        }
+        
+        // Add event listeners for auto-calculation
+        document.addEventListener('DOMContentLoaded', function() {
+            const tbody = document.querySelector('tbody[contenteditable="true"]');
+            if (tbody) {
+                tbody.addEventListener('input', calculateTotals);
+                tbody.addEventListener('blur', calculateTotals);
+            }
+        });
+        
+        // Add row functionality
+        function addRow() {
+            const tbody = document.querySelector('tbody');
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td contenteditable="true">New Item</td>
+                <td contenteditable="true">1</td>
+                <td contenteditable="true">$0.00</td>
+                <td>$0.00</td>
+                <td>$0.00</td>
+            `;
+            tbody.appendChild(newRow);
+            calculateTotals();
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'p':
+                        e.preventDefault();
+                        generatePDF();
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        generatePDF();
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
