@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Tax Invoice</title>
+    <title>Tax Receipt</title>
     <!-- jsPDF CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- html2canvas CDN for better HTML to PDF conversion -->
@@ -15,7 +15,7 @@
             background-color: #f5f5f5;
         }
         
-        .invoice-container {
+        .receipt-container {
             background-color: white;
             padding: 40px;
             border-radius: 8px;
@@ -71,7 +71,7 @@
         }
         
         .btn {
-            background-color: #007bff;
+            background-color: #28a745;
             color: white;
             padding: 10px 20px;
             border: none;
@@ -82,7 +82,7 @@
         }
         
         .btn:hover {
-            background-color: #0056b3;
+            background-color: #218838;
         }
         
         .btn-secondary {
@@ -103,7 +103,7 @@
                 display: none;
             }
             
-            .invoice-container {
+            .receipt-container {
                 box-shadow: none;
                 border-radius: 0;
                 padding: 20px;
@@ -115,33 +115,50 @@
             background-color: white;
             padding: 40px;
         }
+        
+        .paid-stamp {
+            color: #28a745;
+            font-weight: bold;
+            font-size: 1.2em;
+            text-align: center;
+            padding: 10px;
+            border: 2px solid #28a745;
+            border-radius: 5px;
+            margin: 20px 0;
+            background-color: #f8fff8;
+        }
     </style>
 </head>
 <body>
     <!-- Control Panel -->
     <div class="controls">
         <button class="btn" onclick="generatePDF()">📄 Generate PDF</button>
-        <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Invoice</button>
-        <button class="btn btn-secondary" onclick="clearInvoice()">🗑️ Clear All</button>
-        <button class="btn btn-secondary" onclick="window.open('receipt.html', '_blank')">📋 Switch to Receipt</button>
+        <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Receipt</button>
+        <button class="btn btn-secondary" onclick="clearReceipt()">🗑️ Clear All</button>
+        <button class="btn btn-secondary" onclick="window.open('template.html', '_blank')">📝 Switch to Invoice</button>
     </div>
 
-    <div class="invoice-container" id="invoice-content">
-        <h1>Tax Invoice</h1>
+    <div class="receipt-container" id="receipt-content">
+        <h1>Tax Receipt</h1>
 
         <!-- Seller & Buyer Details -->
         <div class="section">
             <div class="column">
                 <p><strong>Seller:</strong> <span contenteditable="true">ELIJAH XYLON JUDAH UDO IBELL</span></p>
                 <p><strong>ABN:</strong> <span contenteditable="true">50 744 683 162</span></p>
-                <p><strong>Invoice #:</strong> <span contenteditable="true">[0001]</span></p>
+                <p><strong>Receipt #:</strong> <span contenteditable="true">[R0001]</span></p>
                 <p><strong>Date:</strong> <span contenteditable="true">11/07/2025</span></p>
             </div>
             <div class="column">
-                <p><strong>Bill To:</strong></p>
+                <p><strong>Received From:</strong></p>
                 <p><span contenteditable="true">[Customer Name]</span><br>
                 <span contenteditable="true">[Customer Address]</span></p>
             </div>
+        </div>
+
+        <!-- Payment Status -->
+        <div class="paid-stamp">
+            ✅ PAYMENT RECEIVED
         </div>
 
         <!-- Items Table -->
@@ -175,15 +192,21 @@
                     <td contenteditable="true">$9.09</td>
                 </tr>
                 <tr>
-                    <td colspan="4" style="text-align:right;">Total Due</td>
+                    <td colspan="4" style="text-align:right;">Total Paid</td>
                     <td contenteditable="true">$100.00</td>
                 </tr>
             </tfoot>
         </table>
 
+        <!-- Payment Method -->
+        <div class="section">
+            <p><strong>Payment Method:</strong> <span contenteditable="true">Bank Transfer</span></p>
+            <p><strong>Payment Date:</strong> <span contenteditable="true">11/07/2025</span></p>
+        </div>
+
         <!-- Taxability Statement -->
         <div class="section">
-            <p><strong>Tax Status:</strong> <span contenteditable="true">All items on this invoice are fully taxable.</span></p>
+            <p><strong>Tax Status:</strong> <span contenteditable="true">All items on this receipt are fully taxable.</span></p>
         </div>
 
         <!-- Payment Details -->
@@ -192,7 +215,7 @@
             <p>BSB: <span contenteditable="true">064812</span> | ACC: <span contenteditable="true">10321945</span></p>
         </div>
 
-        <p>Payment is due within <span contenteditable="true">14</span> days.</p>
+        <p><strong>Thank you for your payment!</strong></p>
     </div>
 
     <script>
@@ -200,14 +223,14 @@
         async function generatePDF() {
             const { jsPDF } = window.jspdf;
             
-            // Get the invoice content
-            const element = document.getElementById('invoice-content');
+            // Get the receipt content
+            const element = document.getElementById('receipt-content');
             
             try {
                 // Show loading message
                 const originalContent = element.innerHTML;
                 
-                // Use html2canvas to capture the invoice content
+                // Use html2canvas to capture the receipt content
                 const canvas = await html2canvas(element, {
                     scale: 2,
                     useCORS: true,
@@ -239,11 +262,11 @@
                     heightLeft -= pageHeight;
                 }
                 
-                // Get invoice number for filename
-                const invoiceNumber = document.querySelector('[contenteditable="true"]').textContent.replace(/[^\w\s]/gi, '').replace(/\s+/g, '_') || 'invoice';
+                // Get receipt number for filename
+                const receiptNumber = document.querySelector('[contenteditable="true"]').textContent.replace(/[^\w\s]/gi, '').replace(/\s+/g, '_') || 'receipt';
                 
                 // Save the PDF
-                pdf.save(`Tax_Invoice_${invoiceNumber}.pdf`);
+                pdf.save(`Tax_Receipt_${receiptNumber}.pdf`);
                 
             } catch (error) {
                 console.error('Error generating PDF:', error);
@@ -252,8 +275,8 @@
         }
         
         // Clear all editable content
-        function clearInvoice() {
-            if (confirm('Are you sure you want to clear all invoice data?')) {
+        function clearReceipt() {
+            if (confirm('Are you sure you want to clear all receipt data?')) {
                 const editableElements = document.querySelectorAll('[contenteditable="true"]');
                 editableElements.forEach(element => {
                     if (element.tagName === 'TBODY') {
